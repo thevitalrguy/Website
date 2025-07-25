@@ -207,7 +207,7 @@ export function RegisterDialog() {
               <CheckCircle className="mr-2 h-4 w-4 text-green-accent mt-0.5 flex-shrink-0" />
               <div>
                 <p className="font-medium text-white mb-1">What happens next?</p>
-                <p>An admin will review your request and send you an email notification at knewton@vitalr.tech when your account is approved.</p>
+                <p>An admin will review your request and approve your account. You can then log in using your email and password.</p>
               </div>
             </div>
           </div>

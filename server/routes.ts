@@ -88,8 +88,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "pending",
       });
       
+      // Log registration request for admin notification
+      console.log(`🔔 NEW REGISTRATION REQUEST:`);
+      console.log(`   Username: ${request.username}`);
+      console.log(`   Email: ${request.email}`);
+      console.log(`   Name: ${[request.firstName, request.lastName].filter(Boolean).join(" ") || "Not provided"}`);
+      console.log(`   Request ID: ${request.id}`);
+      console.log(`   Time: ${new Date().toLocaleString()}`);
+      console.log(`   Review at: /admin (User Requests tab)`);
+      console.log(`─────────────────────────────────────────────────`);
+
       res.json({ 
-        message: "Registration request submitted successfully. You will be notified when approved.",
+        message: "Registration request submitted successfully. An admin will review your request shortly.",
         requestId: request.id 
       });
     } catch (error) {
@@ -349,6 +359,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update registration request status
       await storage.updateRegistrationRequestStatus(id, "approved", req.session.userId!);
       
+      // Log approval notification
+      console.log(`✅ USER APPROVED:`);
+      console.log(`   Username: ${request.username}`);
+      console.log(`   Email: ${request.email}`);
+      console.log(`   User ID: ${user.id}`);
+      console.log(`   Approved by: Admin`);
+      console.log(`   Time: ${new Date().toLocaleString()}`);
+      console.log(`─────────────────────────────────────────────────`);
+      
       res.json({ message: "User approved and account created", userId: user.id });
     } catch (error) {
       console.error("Failed to approve registration:", error);
@@ -359,7 +378,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/registration-requests/:id/reject", isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
+      const requests = await storage.getRegistrationRequests();
+      const request = requests.find(r => r.id === id);
+      
       await storage.updateRegistrationRequestStatus(id, "rejected", req.session.userId!);
+      
+      // Log rejection notification
+      if (request) {
+        console.log(`❌ USER REJECTED:`);
+        console.log(`   Username: ${request.username}`);
+        console.log(`   Email: ${request.email}`);
+        console.log(`   Rejected by: Admin`);
+        console.log(`   Time: ${new Date().toLocaleString()}`);
+        console.log(`─────────────────────────────────────────────────`);
+      }
+      
       res.json({ message: "Registration request rejected" });
     } catch (error) {
       console.error("Failed to reject registration:", error);

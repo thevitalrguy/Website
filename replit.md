@@ -32,16 +32,23 @@ Preferred communication style: Simple, everyday language.
 
 ### Authentication and Authorization
 - **Session Management**: Express sessions with PostgreSQL session store (connect-pg-simple)
-- **Current State**: Authentication system is prepared but not fully implemented
+- **User Registration**: Complete registration system with admin approval workflow
+- **Notification System**: Console-based logging for registration events (no external email service required)
+- **Admin Panel**: Full admin interface for managing user registration requests
 
 ## Key Components
 
 ### Database Schema
-The application defines four main entities:
+The application defines comprehensive entities for education platform management:
 - **Topics**: Core learning areas (networking, security, homelab, etc.)
 - **Articles**: Educational content with metadata (featured status, read time, lab availability)
 - **Resources**: Downloadable content (configs, scripts, tools)
 - **Community Stats**: Platform metrics and engagement data
+- **Users**: User accounts with role-based permissions (admin, user)
+- **Registration Requests**: User registration approval workflow with admin oversight
+- **Document Folders**: Hierarchical document organization system by topic
+- **Documents**: File upload and management system with folder categorization
+- **About Page Content**: Dynamic content management for site information
 
 ### Frontend Components
 - **Layout Components**: Header with navigation, Footer with links and branding
