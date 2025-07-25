@@ -1,5 +1,7 @@
-import { type Topic, type InsertTopic, type Article, type InsertArticle, type Resource, type InsertResource, type CommunityStats, type InsertCommunityStats } from "@shared/schema";
+import { type Topic, type InsertTopic, type Article, type InsertArticle, type Resource, type InsertResource, type CommunityStats, type InsertCommunityStats, topics, articles, resources, communityStats } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Topics
@@ -111,6 +113,7 @@ export class MemStorage implements IStorage {
       readTime: 8,
       hasLab: false,
       hasConfigFiles: true,
+      imageUrl: null,
       createdAt: new Date("2024-12-12"),
       updatedAt: new Date("2024-12-12"),
     };
@@ -126,6 +129,7 @@ export class MemStorage implements IStorage {
       readTime: 12,
       hasLab: true,
       hasConfigFiles: false,
+      imageUrl: null,
       createdAt: new Date("2024-12-10"),
       updatedAt: new Date("2024-12-10"),
     };
@@ -141,6 +145,7 @@ export class MemStorage implements IStorage {
       readTime: 10,
       hasLab: true,
       hasConfigFiles: true,
+      imageUrl: null,
       createdAt: new Date("2024-12-08"),
       updatedAt: new Date("2024-12-08"),
     };
@@ -217,6 +222,10 @@ export class MemStorage implements IStorage {
     const article: Article = { 
       ...insertArticle, 
       id, 
+      featured: insertArticle.featured ?? false,
+      hasLab: insertArticle.hasLab ?? false,
+      hasConfigFiles: insertArticle.hasConfigFiles ?? false,
+      imageUrl: insertArticle.imageUrl ?? null,
       createdAt: now,
       updatedAt: now,
     };
@@ -241,6 +250,8 @@ export class MemStorage implements IStorage {
     const resource: Resource = { 
       ...insertResource, 
       id, 
+      downloadUrl: insertResource.downloadUrl ?? null,
+      externalUrl: insertResource.externalUrl ?? null,
       createdAt: new Date(),
       downloadCount: 0,
     };
@@ -254,8 +265,11 @@ export class MemStorage implements IStorage {
 
   async updateCommunityStats(stats: InsertCommunityStats): Promise<CommunityStats> {
     const updated: CommunityStats = {
-      ...stats,
       id: this.communityStats?.id || randomUUID(),
+      guides: stats.guides ?? 0,
+      implementations: stats.implementations ?? 0,
+      downloads: stats.downloads ?? 0,
+      members: stats.members ?? 0,
       updatedAt: new Date(),
     };
     this.communityStats = updated;
@@ -263,4 +277,88 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getTopics(): Promise<Topic[]> {
+    const result = await db.select().from(topics).orderBy(topics.name);
+    return result;
+  }
+
+  async getTopic(id: string): Promise<Topic | undefined> {
+    const result = await db.select().from(topics).where(eq(topics.id, id));
+    return result[0] || undefined;
+  }
+
+  async getTopicBySlug(slug: string): Promise<Topic | undefined> {
+    const result = await db.select().from(topics).where(eq(topics.slug, slug));
+    return result[0] || undefined;
+  }
+
+  async createTopic(insertTopic: InsertTopic): Promise<Topic> {
+    const result = await db.insert(topics).values(insertTopic).returning();
+    return result[0];
+  }
+
+  async getArticles(): Promise<Article[]> {
+    const result = await db.select().from(articles).orderBy(articles.createdAt);
+    return result;
+  }
+
+  async getFeaturedArticles(): Promise<Article[]> {
+    const result = await db.select().from(articles).where(eq(articles.featured, true)).orderBy(articles.createdAt);
+    return result;
+  }
+
+  async getArticlesByTopic(topicId: string): Promise<Article[]> {
+    const result = await db.select().from(articles).where(eq(articles.topicId, topicId)).orderBy(articles.createdAt);
+    return result;
+  }
+
+  async getArticle(id: string): Promise<Article | undefined> {
+    const result = await db.select().from(articles).where(eq(articles.id, id));
+    return result[0] || undefined;
+  }
+
+  async getArticleBySlug(slug: string): Promise<Article | undefined> {
+    const result = await db.select().from(articles).where(eq(articles.slug, slug));
+    return result[0] || undefined;
+  }
+
+  async createArticle(insertArticle: InsertArticle): Promise<Article> {
+    const result = await db.insert(articles).values(insertArticle).returning();
+    return result[0];
+  }
+
+  async getResources(): Promise<Resource[]> {
+    const result = await db.select().from(resources).orderBy(resources.createdAt);
+    return result;
+  }
+
+  async getResourcesByTopic(topicId: string): Promise<Resource[]> {
+    const result = await db.select().from(resources).where(eq(resources.topicId, topicId)).orderBy(resources.createdAt);
+    return result;
+  }
+
+  async createResource(insertResource: InsertResource): Promise<Resource> {
+    const result = await db.insert(resources).values(insertResource).returning();
+    return result[0];
+  }
+
+  async getCommunityStats(): Promise<CommunityStats | undefined> {
+    const result = await db.select().from(communityStats).limit(1);
+    return result[0] || undefined;
+  }
+
+  async updateCommunityStats(stats: InsertCommunityStats): Promise<CommunityStats> {
+    // Check if stats exist, if not insert, otherwise update
+    const existing = await this.getCommunityStats();
+    if (existing) {
+      const result = await db.update(communityStats).set(stats).where(eq(communityStats.id, existing.id)).returning();
+      return result[0];
+    } else {
+      const result = await db.insert(communityStats).values(stats).returning();
+      return result[0];
+    }
+  }
+}
+
+export const storage = new DatabaseStorage();
