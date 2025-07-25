@@ -1,4 +1,4 @@
-import { type Topic, type InsertTopic, type Article, type InsertArticle, type Resource, type InsertResource, type CommunityStats, type InsertCommunityStats, type User, type InsertUser, type UploadedFile, type InsertUploadedFile, topics, articles, resources, communityStats, users, uploadedFiles } from "@shared/schema";
+import { type Topic, type InsertTopic, type Article, type InsertArticle, type Resource, type InsertResource, type CommunityStats, type InsertCommunityStats, type User, type InsertUser, type UploadedFile, type InsertUploadedFile, type RegistrationRequest, type InsertRegistrationRequest, type DocumentFolder, type InsertDocumentFolder, type Document, type InsertDocument, type AboutPageContent, type InsertAboutPageContent, topics, articles, resources, communityStats, users, uploadedFiles, registrationRequests, documentFolders, documents, aboutPageContent } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
@@ -39,6 +39,26 @@ export interface IStorage {
   getUploadedFile(id: string): Promise<UploadedFile | undefined>;
   createUploadedFile(file: InsertUploadedFile): Promise<UploadedFile>;
   incrementDownloadCount(fileId: string): Promise<void>;
+  
+  // Registration Requests
+  getRegistrationRequests(): Promise<RegistrationRequest[]>;
+  getPendingRegistrationRequests(): Promise<RegistrationRequest[]>;
+  createRegistrationRequest(request: InsertRegistrationRequest): Promise<RegistrationRequest>;
+  updateRegistrationRequestStatus(id: string, status: string, processedBy: string): Promise<RegistrationRequest>;
+  
+  // Document Folders
+  getDocumentFolders(): Promise<DocumentFolder[]>;
+  getDocumentFoldersByTopic(topicId: string): Promise<DocumentFolder[]>;
+  createDocumentFolder(folder: InsertDocumentFolder): Promise<DocumentFolder>;
+  
+  // Documents
+  getDocuments(): Promise<Document[]>;
+  getDocumentsByFolder(folderId: string): Promise<Document[]>;
+  createDocument(document: InsertDocument): Promise<Document>;
+  
+  // About Page Content
+  getAboutPageContent(): Promise<AboutPageContent | undefined>;
+  updateAboutPageContent(content: InsertAboutPageContent): Promise<AboutPageContent>;
 }
 
 export class MemStorage implements IStorage {
@@ -322,6 +342,58 @@ export class MemStorage implements IStorage {
   async incrementDownloadCount(fileId: string): Promise<void> {
     // No-op for memory storage
   }
+
+  // Registration requests (stub implementations for memory storage)
+  async getRegistrationRequests(): Promise<RegistrationRequest[]> {
+    return [];
+  }
+
+  async getPendingRegistrationRequests(): Promise<RegistrationRequest[]> {
+    return [];
+  }
+
+  async createRegistrationRequest(request: InsertRegistrationRequest): Promise<RegistrationRequest> {
+    throw new Error("Registration requests not supported in memory storage");
+  }
+
+  async updateRegistrationRequestStatus(id: string, status: string, processedBy: string): Promise<RegistrationRequest> {
+    throw new Error("Registration requests not supported in memory storage");
+  }
+
+  // Document folders (stub implementations for memory storage)
+  async getDocumentFolders(): Promise<DocumentFolder[]> {
+    return [];
+  }
+
+  async getDocumentFoldersByTopic(topicId: string): Promise<DocumentFolder[]> {
+    return [];
+  }
+
+  async createDocumentFolder(folder: InsertDocumentFolder): Promise<DocumentFolder> {
+    throw new Error("Document folders not supported in memory storage");
+  }
+
+  // Documents (stub implementations for memory storage)
+  async getDocuments(): Promise<Document[]> {
+    return [];
+  }
+
+  async getDocumentsByFolder(folderId: string): Promise<Document[]> {
+    return [];
+  }
+
+  async createDocument(document: InsertDocument): Promise<Document> {
+    throw new Error("Documents not supported in memory storage");
+  }
+
+  // About page content (stub implementations for memory storage)
+  async getAboutPageContent(): Promise<AboutPageContent | undefined> {
+    return undefined;
+  }
+
+  async updateAboutPageContent(content: InsertAboutPageContent): Promise<AboutPageContent> {
+    throw new Error("About page content not supported in memory storage");
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -449,6 +521,96 @@ export class DatabaseStorage implements IStorage {
     await db.update(uploadedFiles)
       .set({ downloadCount: sql`${uploadedFiles.downloadCount} + 1` })
       .where(eq(uploadedFiles.id, fileId));
+  }
+
+  // Registration Requests
+  async getRegistrationRequests(): Promise<RegistrationRequest[]> {
+    const result = await db.select().from(registrationRequests).orderBy(registrationRequests.requestedAt);
+    return result;
+  }
+
+  async getPendingRegistrationRequests(): Promise<RegistrationRequest[]> {
+    const result = await db.select().from(registrationRequests)
+      .where(eq(registrationRequests.status, "pending"))
+      .orderBy(registrationRequests.requestedAt);
+    return result;
+  }
+
+  async createRegistrationRequest(request: InsertRegistrationRequest): Promise<RegistrationRequest> {
+    // Hash password before storing
+    const hashedPassword = await bcrypt.hash(request.password, 10);
+    const requestWithHashedPassword = { ...request, password: hashedPassword };
+    const result = await db.insert(registrationRequests).values(requestWithHashedPassword).returning();
+    return result[0];
+  }
+
+  async updateRegistrationRequestStatus(id: string, status: string, processedBy: string): Promise<RegistrationRequest> {
+    const result = await db.update(registrationRequests)
+      .set({ 
+        status, 
+        processedBy, 
+        processedAt: new Date() 
+      })
+      .where(eq(registrationRequests.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Document Folders
+  async getDocumentFolders(): Promise<DocumentFolder[]> {
+    const result = await db.select().from(documentFolders).orderBy(documentFolders.sortOrder, documentFolders.name);
+    return result;
+  }
+
+  async getDocumentFoldersByTopic(topicId: string): Promise<DocumentFolder[]> {
+    const result = await db.select().from(documentFolders)
+      .where(eq(documentFolders.topicId, topicId))
+      .orderBy(documentFolders.sortOrder, documentFolders.name);
+    return result;
+  }
+
+  async createDocumentFolder(folder: InsertDocumentFolder): Promise<DocumentFolder> {
+    const result = await db.insert(documentFolders).values(folder).returning();
+    return result[0];
+  }
+
+  // Documents
+  async getDocuments(): Promise<Document[]> {
+    const result = await db.select().from(documents).orderBy(documents.createdAt);
+    return result;
+  }
+
+  async getDocumentsByFolder(folderId: string): Promise<Document[]> {
+    const result = await db.select().from(documents)
+      .where(eq(documents.folderId, folderId))
+      .orderBy(documents.createdAt);
+    return result;
+  }
+
+  async createDocument(document: InsertDocument): Promise<Document> {
+    const result = await db.insert(documents).values(document).returning();
+    return result[0];
+  }
+
+  // About Page Content
+  async getAboutPageContent(): Promise<AboutPageContent | undefined> {
+    const result = await db.select().from(aboutPageContent).limit(1);
+    return result[0] || undefined;
+  }
+
+  async updateAboutPageContent(content: InsertAboutPageContent): Promise<AboutPageContent> {
+    // Check if content exists, if not insert, otherwise update
+    const existing = await this.getAboutPageContent();
+    if (existing) {
+      const result = await db.update(aboutPageContent)
+        .set({ ...content, updatedAt: new Date() })
+        .where(eq(aboutPageContent.id, existing.id))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(aboutPageContent).values(content).returning();
+      return result[0];
+    }
   }
 }
 

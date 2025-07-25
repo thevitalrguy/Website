@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { getSession, isAuthenticated, isAdmin } from "./auth";
 import { seedDatabase } from "./seed";
-import { loginSchema } from "@shared/schema";
+import { loginSchema, registrationSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -59,6 +59,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Initialize database with seed data
   await seedDatabase();
+
+  // Registration route
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const registrationData = registrationSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(registrationData.email);
+      if (existingUser) {
+        return res.status(400).json({ message: "User with this email already exists" });
+      }
+      
+      // Check if registration request already exists
+      const existingRequests = await storage.getRegistrationRequests();
+      const existingRequest = existingRequests.find(r => r.email === registrationData.email && r.status === "pending");
+      if (existingRequest) {
+        return res.status(400).json({ message: "Registration request already pending for this email" });
+      }
+      
+      // Create registration request
+      const request = await storage.createRegistrationRequest({
+        username: registrationData.username,
+        email: registrationData.email,
+        password: registrationData.password,
+        firstName: registrationData.firstName || null,
+        lastName: registrationData.lastName || null,
+        status: "pending",
+      });
+      
+      res.json({ 
+        message: "Registration request submitted successfully. You will be notified when approved.",
+        requestId: request.id 
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(400).json({ message: "Invalid registration data" });
+    }
+  });
 
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
@@ -269,6 +307,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch community stats" });
+    }
+  });
+
+  // Admin registration management routes
+  app.get("/api/admin/registration-requests", isAdmin, async (req, res) => {
+    try {
+      const status = req.query.status as string;
+      let requests;
+      if (status === "pending") {
+        requests = await storage.getPendingRegistrationRequests();
+      } else {
+        requests = await storage.getRegistrationRequests();
+      }
+      res.json(requests);
+    } catch (error) {
+      console.error("Failed to fetch registration requests:", error);
+      res.status(500).json({ message: "Failed to fetch registration requests" });
+    }
+  });
+
+  app.post("/api/admin/registration-requests/:id/approve", isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const requests = await storage.getRegistrationRequests();
+      const request = requests.find(r => r.id === id);
+      
+      if (!request || request.status !== "pending") {
+        return res.status(404).json({ message: "Registration request not found or already processed" });
+      }
+      
+      // Create user account
+      const user = await storage.createUser({
+        email: request.email,
+        passwordHash: request.password, // Already hashed in registration request
+        role: "user",
+        firstName: request.firstName || undefined,
+        lastName: request.lastName || undefined,
+      });
+      
+      // Update registration request status
+      await storage.updateRegistrationRequestStatus(id, "approved", req.session.userId!);
+      
+      res.json({ message: "User approved and account created", userId: user.id });
+    } catch (error) {
+      console.error("Failed to approve registration:", error);
+      res.status(500).json({ message: "Failed to approve registration" });
+    }
+  });
+
+  app.post("/api/admin/registration-requests/:id/reject", isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.updateRegistrationRequestStatus(id, "rejected", req.session.userId!);
+      res.json({ message: "Registration request rejected" });
+    } catch (error) {
+      console.error("Failed to reject registration:", error);
+      res.status(500).json({ message: "Failed to reject registration" });
+    }
+  });
+
+  // Document folder routes
+  app.get("/api/document-folders", async (req, res) => {
+    try {
+      const topicId = req.query.topicId as string;
+      let folders;
+      if (topicId) {
+        folders = await storage.getDocumentFoldersByTopic(topicId);
+      } else {
+        folders = await storage.getDocumentFolders();
+      }
+      res.json(folders);
+    } catch (error) {
+      console.error("Failed to fetch document folders:", error);
+      res.status(500).json({ message: "Failed to fetch document folders" });
+    }
+  });
+
+  app.post("/api/admin/document-folders", isAdmin, async (req, res) => {
+    try {
+      const folder = await storage.createDocumentFolder(req.body);
+      res.json(folder);
+    } catch (error) {
+      console.error("Failed to create document folder:", error);
+      res.status(500).json({ message: "Failed to create document folder" });
+    }
+  });
+
+  // Document routes
+  app.get("/api/documents", async (req, res) => {
+    try {
+      const folderId = req.query.folderId as string;
+      let documents;
+      if (folderId) {
+        documents = await storage.getDocumentsByFolder(folderId);
+      } else {
+        documents = await storage.getDocuments();
+      }
+      res.json(documents);
+    } catch (error) {
+      console.error("Failed to fetch documents:", error);
+      res.status(500).json({ message: "Failed to fetch documents" });
+    }
+  });
+
+  app.post("/api/admin/documents", isAdmin, upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const { title, description, folderId } = req.body;
+      
+      const fileExtension = path.extname(req.file.originalname);
+      const newFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}${fileExtension}`;
+      const newFilePath = path.join(uploadsDir, newFileName);
+      
+      // Move file to permanent location with new name
+      fs.renameSync(req.file.path, newFilePath);
+
+      const document = await storage.createDocument({
+        title: title || req.file.originalname,
+        description: description || null,
+        fileName: newFileName,
+        filePath: `/uploads/${newFileName}`,
+        mimeType: req.file.mimetype,
+        size: req.file.size,
+        folderId: folderId || null,
+        uploadedBy: req.session.userId!,
+        isPublic: true,
+      });
+
+      res.json(document);
+    } catch (error) {
+      console.error("Failed to upload document:", error);
+      res.status(500).json({ message: "Failed to upload document" });
+    }
+  });
+
+  // About page content routes
+  app.get("/api/about-content", async (req, res) => {
+    try {
+      const content = await storage.getAboutPageContent();
+      res.json(content);
+    } catch (error) {
+      console.error("Failed to fetch about content:", error);
+      res.status(500).json({ message: "Failed to fetch about content" });
+    }
+  });
+
+  app.post("/api/admin/about-content", isAdmin, async (req, res) => {
+    try {
+      const content = await storage.updateAboutPageContent({
+        ...req.body,
+        updatedBy: req.session.userId!,
+      });
+      res.json(content);
+    } catch (error) {
+      console.error("Failed to update about content:", error);
+      res.status(500).json({ message: "Failed to update about content" });
     }
   });
 
