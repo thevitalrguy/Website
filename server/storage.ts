@@ -1,7 +1,8 @@
-import { type Topic, type InsertTopic, type Article, type InsertArticle, type Resource, type InsertResource, type CommunityStats, type InsertCommunityStats, topics, articles, resources, communityStats } from "@shared/schema";
+import { type Topic, type InsertTopic, type Article, type InsertArticle, type Resource, type InsertResource, type CommunityStats, type InsertCommunityStats, type User, type InsertUser, type UploadedFile, type InsertUploadedFile, topics, articles, resources, communityStats, users, uploadedFiles } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import bcrypt from "bcrypt";
 
 export interface IStorage {
   // Topics
@@ -26,6 +27,18 @@ export interface IStorage {
   // Community Stats
   getCommunityStats(): Promise<CommunityStats | undefined>;
   updateCommunityStats(stats: InsertCommunityStats): Promise<CommunityStats>;
+  
+  // Authentication
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserById(id: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  verifyPassword(plainPassword: string, hashedPassword: string): Promise<boolean>;
+  
+  // File Uploads
+  getUploadedFiles(): Promise<UploadedFile[]>;
+  getUploadedFile(id: string): Promise<UploadedFile | undefined>;
+  createUploadedFile(file: InsertUploadedFile): Promise<UploadedFile>;
+  incrementDownloadCount(fileId: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -275,6 +288,40 @@ export class MemStorage implements IStorage {
     this.communityStats = updated;
     return updated;
   }
+
+  // Authentication methods (stub implementations for memory storage)
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return undefined; // Memory storage doesn't support users
+  }
+
+  async getUserById(id: string): Promise<User | undefined> {
+    return undefined; // Memory storage doesn't support users
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    throw new Error("User creation not supported in memory storage");
+  }
+
+  async verifyPassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
+    return bcrypt.compare(plainPassword, hashedPassword);
+  }
+
+  // File upload methods (stub implementations for memory storage)
+  async getUploadedFiles(): Promise<UploadedFile[]> {
+    return []; // Memory storage doesn't support file uploads
+  }
+
+  async getUploadedFile(id: string): Promise<UploadedFile | undefined> {
+    return undefined; // Memory storage doesn't support file uploads
+  }
+
+  async createUploadedFile(file: InsertUploadedFile): Promise<UploadedFile> {
+    throw new Error("File upload not supported in memory storage");
+  }
+
+  async incrementDownloadCount(fileId: string): Promise<void> {
+    // No-op for memory storage
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -358,6 +405,50 @@ export class DatabaseStorage implements IStorage {
       const result = await db.insert(communityStats).values(stats).returning();
       return result[0];
     }
+  }
+
+  // Authentication methods
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.email, email));
+    return result[0] || undefined;
+  }
+
+  async getUserById(id: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0] || undefined;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const hashedPassword = await bcrypt.hash(user.passwordHash, 10);
+    const userWithHashedPassword = { ...user, passwordHash: hashedPassword };
+    const result = await db.insert(users).values(userWithHashedPassword).returning();
+    return result[0];
+  }
+
+  async verifyPassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
+    return bcrypt.compare(plainPassword, hashedPassword);
+  }
+
+  // File upload methods
+  async getUploadedFiles(): Promise<UploadedFile[]> {
+    const result = await db.select().from(uploadedFiles).orderBy(uploadedFiles.createdAt);
+    return result;
+  }
+
+  async getUploadedFile(id: string): Promise<UploadedFile | undefined> {
+    const result = await db.select().from(uploadedFiles).where(eq(uploadedFiles.id, id));
+    return result[0] || undefined;
+  }
+
+  async createUploadedFile(file: InsertUploadedFile): Promise<UploadedFile> {
+    const result = await db.insert(uploadedFiles).values(file).returning();
+    return result[0];
+  }
+
+  async incrementDownloadCount(fileId: string): Promise<void> {
+    await db.update(uploadedFiles)
+      .set({ downloadCount: sql`${uploadedFiles.downloadCount} + 1` })
+      .where(eq(uploadedFiles.id, fileId));
   }
 }
 

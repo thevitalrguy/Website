@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Network, Shield, Server, Home } from "lucide-react";
+import { Link } from "wouter";
 import type { Topic } from "@shared/schema";
 
 const topicIcons = {
@@ -53,19 +54,21 @@ export default function FeaturedTopics() {
             const IconComponent = topicIcons[topic.icon as keyof typeof topicIcons] || Network;
             
             return (
-              <Card key={topic.id} className="bg-card-dark border-metal-grey/20 hover:border-green-accent/50 transition-all duration-300 group cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-green-accent/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-green-accent/30 transition-colors duration-300">
-                    <IconComponent className="text-green-accent" size={24} />
-                  </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">{topic.name}</h3>
-                  <p className="text-text-muted text-sm mb-4">{topic.description}</p>
-                  <div className="flex items-center text-green-accent text-sm font-medium">
-                    <span>{topic.guideCount} Guides</span>
-                    <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform duration-200" size={14} />
-                  </div>
-                </CardContent>
-              </Card>
+              <Link key={topic.id} href={`/documentation?topic=${topic.slug}`}>
+                <Card className="bg-card-dark border-metal-grey/20 hover:border-green-accent/50 transition-all duration-300 group cursor-pointer">
+                  <CardContent className="p-6">
+                    <div className="w-12 h-12 bg-green-accent/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-green-accent/30 transition-colors duration-300">
+                      <IconComponent className="text-green-accent" size={24} />
+                    </div>
+                    <h3 className="text-lg font-semibold text-white mb-2">{topic.name}</h3>
+                    <p className="text-text-muted text-sm mb-4">{topic.description}</p>
+                    <div className="flex items-center text-green-accent text-sm font-medium">
+                      <span>{topic.guideCount} Guides</span>
+                      <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform duration-200" size={14} />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             );
           })}
         </div>

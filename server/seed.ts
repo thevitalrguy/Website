@@ -1,144 +1,162 @@
-import { db } from "./db";
-import { topics, articles, communityStats } from "@shared/schema";
+import { storage } from "./storage";
+import type { InsertUser, InsertTopic, InsertArticle, InsertCommunityStats } from "@shared/schema";
 
-async function seedDatabase() {
-  console.log("🌱 Starting database seed...");
+export async function seedDatabase() {
+  console.log("Seeding database...");
 
   try {
-    // Clear existing data
-    await db.delete(articles);
-    await db.delete(topics);
-    await db.delete(communityStats);
+    // Create admin user if it doesn't exist
+    const existingAdmin = await storage.getUserByEmail("admin@vitalr.tech");
+    if (!existingAdmin) {
+      const adminUser: InsertUser = {
+        email: "admin@vitalr.tech",
+        passwordHash: "admin123", // This will be hashed in the storage layer
+        role: "admin",
+        firstName: "Admin",
+        lastName: "User",
+      };
+      await storage.createUser(adminUser);
+      console.log("Created admin user: admin@vitalr.tech / admin123");
+    }
 
-    // Seed topics
-    const topicsData = [
-      {
-        id: "networking",
-        name: "Networking",
-        description: "Network fundamentals, protocols, VLANs, routing, and enterprise networking concepts",
-        icon: "fas fa-network-wired",
-        slug: "networking",
-        guideCount: 24,
-      },
-      {
-        id: "security",
-        name: "Cybersecurity",
-        description: "Security frameworks, threat analysis, incident response, and defensive strategies",
-        icon: "fas fa-shield-alt",
-        slug: "cybersecurity",
-        guideCount: 32,
-      },
-      {
-        id: "sysadmin",
-        name: "System Administration",
-        description: "Linux administration, Windows Server, automation, and infrastructure management",
-        icon: "fas fa-server",
-        slug: "system-administration",
-        guideCount: 28,
-      },
-      {
-        id: "homelab",
-        name: "Homelab",
-        description: "Self-hosted services, containerization, monitoring, and lab environment setup",
-        icon: "fas fa-home",
-        slug: "homelab",
-        guideCount: 19,
-      },
-    ];
+    // Check if topics already exist
+    const existingTopics = await storage.getTopics();
+    if (existingTopics.length === 0) {
+      // Seed topics
+      const topics: InsertTopic[] = [
+        {
+          name: "Cybersecurity",
+          description: "Security frameworks, threat analysis, incident response, and defensive strategies",
+          icon: "fas fa-shield-alt",
+          slug: "cybersecurity",
+          guideCount: 32,
+        },
+        {
+          name: "Homelab",
+          description: "Self-hosted infrastructure, virtualization, and hands-on learning environments",
+          icon: "fas fa-home",
+          slug: "homelab",
+          guideCount: 18,
+        },
+        {
+          name: "Networking",
+          description: "Network fundamentals, protocols, VLANs, routing, and enterprise networking concepts",
+          icon: "fas fa-network-wired",
+          slug: "networking",
+          guideCount: 24,
+        },
+        {
+          name: "System Administration",
+          description: "Linux administration, Windows Server, automation, and infrastructure management",
+          icon: "fas fa-server",
+          slug: "system-administration",
+          guideCount: 28,
+        },
+      ];
 
-    console.log("📝 Inserting topics...");
-    await db.insert(topics).values(topicsData);
+      for (const topic of topics) {
+        await storage.createTopic(topic);
+      }
+      console.log("Created topics");
 
-    // Seed articles
-    const articlesData = [
-      {
-        id: "article1",
-        title: "Building a Secure Enterprise Network with pfSense and VLANs",
-        description: "Complete guide to implementing enterprise-grade network segmentation using pfSense firewall, VLAN configuration, and security policies for homelab environments.",
-        content: "# Building a Secure Enterprise Network with pfSense and VLANs\n\nThis comprehensive guide covers the implementation of enterprise-grade network segmentation...",
-        slug: "pfsense-vlan-enterprise-network",
-        topicId: "networking",
-        featured: true,
-        readTime: 15,
-        hasLab: true,
-        hasConfigFiles: true,
-        imageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400",
-      },
-      {
-        id: "article2",
-        title: "Implementing Zero Trust with Cloudflare Tunnel",
-        description: "Step-by-step implementation of zero trust architecture using Cloudflare Tunnel for secure remote access...",
-        content: "# Implementing Zero Trust with Cloudflare Tunnel\n\nZero trust architecture is becoming essential...",
-        slug: "zero-trust-cloudflare-tunnel",
-        topicId: "security",
-        featured: false,
-        readTime: 8,
-        hasLab: false,
-        hasConfigFiles: true,
-        imageUrl: null,
-      },
-      {
-        id: "article3",
-        title: "Docker Swarm vs Kubernetes for Homelabs",
-        description: "Comprehensive comparison of orchestration platforms with practical deployment examples and resource requirements...",
-        content: "# Docker Swarm vs Kubernetes for Homelabs\n\nContainer orchestration is a key component...",
-        slug: "docker-swarm-vs-kubernetes-homelab",
-        topicId: "homelab",
-        featured: false,
-        readTime: 12,
-        hasLab: true,
-        hasConfigFiles: false,
-        imageUrl: null,
-      },
-      {
-        id: "article4",
-        title: "Automated Backup Strategies with Restic",
-        description: "Building resilient backup systems using Restic with encryption, deduplication, and multi-destination support...",
-        content: "# Automated Backup Strategies with Restic\n\nData protection is critical for any infrastructure...",
-        slug: "automated-backup-restic",
-        topicId: "sysadmin",
-        featured: false,
-        readTime: 10,
-        hasLab: true,
-        hasConfigFiles: true,
-        imageUrl: null,
-      },
-    ];
+      // Seed some sample articles
+      const topicList = await storage.getTopics();
+      const cyberTopic = topicList.find(t => t.slug === "cybersecurity");
+      const networkTopic = topicList.find(t => t.slug === "networking");
+      const homelabTopic = topicList.find(t => t.slug === "homelab");
+      const sysadminTopic = topicList.find(t => t.slug === "system-administration");
 
-    console.log("📰 Inserting articles...");
-    await db.insert(articles).values(articlesData);
+      if (cyberTopic) {
+        const articles: InsertArticle[] = [
+          {
+            title: "Building a Home SOC with Wazuh",
+            description: "Complete guide to setting up a Security Operations Center using Wazuh SIEM",
+            content: "Learn how to build a comprehensive home Security Operations Center...",
+            slug: "building-home-soc-wazuh",
+            topicId: cyberTopic.id,
+            featured: true,
+            readTime: 15,
+            hasLab: true,
+            hasConfigFiles: true,
+            imageUrl: "https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+          },
+          {
+            title: "Network Intrusion Detection with Suricata",
+            description: "Deploy and configure Suricata IDS for network monitoring and threat detection",
+            content: "This comprehensive guide covers Suricata installation, configuration...",
+            slug: "network-intrusion-detection-suricata",
+            topicId: cyberTopic.id,
+            featured: true,
+            readTime: 12,
+            hasLab: true,
+            hasConfigFiles: true,
+          },
+        ];
+
+        for (const article of articles) {
+          await storage.createArticle(article);
+        }
+      }
+
+      if (networkTopic) {
+        const networkArticles: InsertArticle[] = [
+          {
+            title: "VLAN Configuration on pfSense",
+            description: "Step-by-step guide to configuring VLANs for network segmentation",
+            content: "VLANs are essential for network segmentation and security...",
+            slug: "vlan-configuration-pfsense",
+            topicId: networkTopic.id,
+            featured: false,
+            readTime: 8,
+            hasLab: true,
+            hasConfigFiles: true,
+          },
+        ];
+
+        for (const article of networkArticles) {
+          await storage.createArticle(article);
+        }
+      }
+
+      if (homelabTopic) {
+        const homelabArticles: InsertArticle[] = [
+          {
+            title: "Proxmox VE Home Server Setup",
+            description: "Building a powerful virtualization platform for your homelab",
+            content: "Proxmox Virtual Environment is an excellent choice for homelab virtualization...",
+            slug: "proxmox-ve-home-server-setup",
+            topicId: homelabTopic.id,
+            featured: true,
+            readTime: 20,
+            hasLab: true,
+            hasConfigFiles: false,
+            imageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+          },
+        ];
+
+        for (const article of homelabArticles) {
+          await storage.createArticle(article);
+        }
+      }
+
+      console.log("Created sample articles");
+    }
 
     // Seed community stats
-    const statsData = {
-      id: "stats1",
-      guides: 150,
-      implementations: 50,
-      downloads: 2500,
-      members: 1200,
-    };
+    const existingStats = await storage.getCommunityStats();
+    if (!existingStats) {
+      const stats: InsertCommunityStats = {
+        guides: 102,
+        implementations: 1247,
+        downloads: 8934,
+        members: 3521,
+      };
+      await storage.updateCommunityStats(stats);
+      console.log("Created community stats");
+    }
 
-    console.log("📊 Inserting community stats...");
-    await db.insert(communityStats).values(statsData);
-
-    console.log("✅ Database seeded successfully!");
+    console.log("Database seeding completed");
   } catch (error) {
-    console.error("❌ Error seeding database:", error);
-    throw error;
+    console.error("Error seeding database:", error);
   }
 }
-
-// Run the seed function if this file is executed directly
-const isMainModule = import.meta.url === `file://${process.argv[1]}`;
-if (isMainModule) {
-  seedDatabase()
-    .then(() => {
-      console.log("🎉 Seeding completed!");
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error("💥 Seeding failed:", error);
-      process.exit(1);
-    });
-}
-
-export { seedDatabase };

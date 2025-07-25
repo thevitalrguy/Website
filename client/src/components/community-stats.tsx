@@ -36,24 +36,24 @@ export default function CommunityStatsSection() {
 
   const statsData = [
     {
-      value: `${stats?.guides || 0}+`,
+      value: `${stats?.totalGuides || 0}+`,
       label: "Technical Guides",
       description: "Comprehensive tutorials",
     },
     {
-      value: `${stats?.implementations || 0}+`,
+      value: `${stats?.labsCompleted || 0}+`,
       label: "Lab Implementations", 
       description: "Real-world examples",
     },
     {
-      value: `${(stats?.downloads || 0) / 1000}K+`,
-      label: "Resource Downloads",
-      description: "Config files & scripts",
-    },
-    {
-      value: `${(stats?.members || 0) / 1000}K+`,
+      value: `${stats?.totalMembers || 0}+`,
       label: "Community Members",
       description: "Active contributors",
+    },
+    {
+      value: stats?.serverUptime || "99.9%",
+      label: "Infrastructure Uptime",
+      description: "Reliable homelab environments",
     },
   ];
 

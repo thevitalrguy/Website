@@ -3,11 +3,15 @@ import { Link, useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Search, Menu, Shield } from "lucide-react";
+import { Search, Menu, Shield, LogOut, Settings } from "lucide-react";
+import { LoginDialog } from "@/components/auth/login-dialog";
+import { useAuth, useLogout } from "@/hooks/useAuth";
 
 export default function Header() {
   const [location] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const { user, isAuthenticated, isAdmin } = useAuth();
+  const logout = useLogout();
 
   const navigation = [
     { name: "Documentation", href: "/documentation", active: location === "/documentation" },
@@ -49,7 +53,7 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Search & Mobile Menu */}
+          {/* Search & Auth */}
           <div className="flex items-center space-x-4">
             <div className="hidden sm:block relative">
               <Input
@@ -61,6 +65,31 @@ export default function Header() {
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted" size={14} />
             </div>
+
+            {/* Authentication */}
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-3">
+                {isAdmin && (
+                  <Link href="/admin">
+                    <Button variant="outline" size="sm" className="border-green-accent/30 text-green-accent hover:bg-green-accent/10">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
+                <span className="text-sm text-text-muted">Welcome, {user?.firstName || user?.email}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => logout.mutate()}
+                  className="text-text-muted hover:text-white"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <LoginDialog />
+            )}
             
             {/* Mobile Menu */}
             <Sheet>
