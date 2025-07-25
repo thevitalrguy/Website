@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # VITALR Technologies - Cybersecurity & Homelab Education Platform
 
 A modern, full-stack web application focused on cybersecurity and homelab education with hands-on learning experiences.
@@ -103,3 +104,7 @@ For questions or support, reach out through the community channels or create an 
 ---
 
 Built with privacy and control in mind. 🛡️
+=======
+# Website
+This is for cloud access on my website anywhere
+>>>>>>> 9a2628e93fe0bd44cfe0ef9503c9c21eb868377f
