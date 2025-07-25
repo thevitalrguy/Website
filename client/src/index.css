@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(156, 32%, 10%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(156, 15%, 20%);
+  --muted-foreground: hsl(0, 0%, 62.8%);
+  --popover: hsl(156, 32%, 12%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(156, 32%, 14%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(0, 0%, 36%);
+  --input: hsl(156, 15%, 20%);
+  --primary: hsl(147, 39%, 35%);
+  --primary-foreground: hsl(0, 0%, 98%);
+  --secondary: hsl(156, 15%, 20%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(156, 15%, 20%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(147, 39%, 35%);
+  --radius: 0.5rem;
+  
+  /* Custom VITALR colors */
+  --primary-dark: hsl(156, 32%, 10%);
+  --green-accent: hsl(147, 39%, 35%);
+  --metal-grey: hsl(0, 0%, 36%);
+  --card-dark: hsl(156, 32%, 14%);
+  --text-muted: hsl(0, 0%, 62.8%);
+}
+
+.dark {
+  --background: hsl(156, 32%, 10%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(156, 15%, 20%);
+  --muted-foreground: hsl(0, 0%, 62.8%);
+  --popover: hsl(156, 32%, 12%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(156, 32%, 14%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(0, 0%, 36%);
+  --input: hsl(156, 15%, 20%);
+  --primary: hsl(147, 39%, 35%);
+  --primary-foreground: hsl(0, 0%, 98%);
+  --secondary: hsl(156, 15%, 20%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(156, 15%, 20%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(147, 39%, 35%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer utilities {
+  .bg-primary-dark {
+    background-color: var(--primary-dark);
+  }
+  
+  .bg-green-accent {
+    background-color: var(--green-accent);
+  }
+  
+  .bg-metal-grey {
+    background-color: var(--metal-grey);
+  }
+  
+  .bg-card-dark {
+    background-color: var(--card-dark);
+  }
+  
+  .text-green-accent {
+    color: var(--green-accent);
+  }
+  
+  .text-metal-grey {
+    color: var(--metal-grey);
+  }
+  
+  .text-text-muted {
+    color: var(--text-muted);
+  }
+  
+  .border-metal-grey {
+    border-color: var(--metal-grey);
+  }
+  
+  .border-green-accent {
+    border-color: var(--green-accent);
+  }
+  
+  .hover\:text-green-accent:hover {
+    color: var(--green-accent);
+  }
+  
+  .hover\:border-green-accent:hover {
+    border-color: var(--green-accent);
+  }
+  
+  .hover\:bg-green-accent:hover {
+    background-color: var(--green-accent);
+  }
+  
+  .focus\:border-green-accent:focus {
+    border-color: var(--green-accent);
+  }
+}
