@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Search, Menu, Shield, LogOut, Settings } from "lucide-react";
 import { LoginDialog } from "@/components/auth/login-dialog";
-import { RegisterDialog } from "@/components/auth/register-dialog";
 import { useAuth, useLogout } from "@/hooks/useAuth";
 
 export default function Header() {
@@ -90,7 +89,6 @@ export default function Header() {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <RegisterDialog />
                 <LoginDialog />
               </div>
             )}

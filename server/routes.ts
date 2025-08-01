@@ -60,53 +60,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize database with seed data
   await seedDatabase();
 
-  // Registration route
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      const registrationData = registrationSchema.parse(req.body);
-      
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(registrationData.email);
-      if (existingUser) {
-        return res.status(400).json({ message: "User with this email already exists" });
-      }
-      
-      // Check if registration request already exists
-      const existingRequests = await storage.getRegistrationRequests();
-      const existingRequest = existingRequests.find(r => r.email === registrationData.email && r.status === "pending");
-      if (existingRequest) {
-        return res.status(400).json({ message: "Registration request already pending for this email" });
-      }
-      
-      // Create registration request
-      const request = await storage.createRegistrationRequest({
-        username: registrationData.username,
-        email: registrationData.email,
-        password: registrationData.password,
-        firstName: registrationData.firstName || null,
-        lastName: registrationData.lastName || null,
-        status: "pending",
-      });
-      
-      // Log registration request for admin notification
-      console.log(`🔔 NEW REGISTRATION REQUEST:`);
-      console.log(`   Username: ${request.username}`);
-      console.log(`   Email: ${request.email}`);
-      console.log(`   Name: ${[request.firstName, request.lastName].filter(Boolean).join(" ") || "Not provided"}`);
-      console.log(`   Request ID: ${request.id}`);
-      console.log(`   Time: ${new Date().toLocaleString()}`);
-      console.log(`   Review at: /admin (User Requests tab)`);
-      console.log(`─────────────────────────────────────────────────`);
-
-      res.json({ 
-        message: "Registration request submitted successfully. An admin will review your request shortly.",
-        requestId: request.id 
-      });
-    } catch (error) {
-      console.error("Registration error:", error);
-      res.status(400).json({ message: "Invalid registration data" });
-    }
-  });
+  // Registration is disabled - admin access only
 
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
