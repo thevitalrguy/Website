@@ -29,10 +29,18 @@ export function RegisterDialog() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
+        credentials: "include",
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Registration failed");
+        let errorMessage = "Registration failed";
+        try {
+          const error = await response.json();
+          errorMessage = error.message || errorMessage;
+        } catch (parseError) {
+          console.error("Failed to parse error response:", parseError);
+          errorMessage = `Registration failed (${response.status})`;
+        }
+        throw new Error(errorMessage);
       }
       return response.json();
     },
