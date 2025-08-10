@@ -19,17 +19,16 @@ export default function Footer() {
   ];
 
   const communityLinks = [
-    { name: "Discord Server", href: "/community" },
-    { name: "GitHub", href: "/community" },
-    { name: "Contributing", href: "/community" },
+    { name: "Discord Server", href: "https://discord.com/invite/Pzy2wygGwm" },
+    { name: "GitHub", href: "https://github.com/thevitalrguy" },
+    { name: "Ask a Question", href: "https://www.reddit.com/r/vitalrtech/" },
     { name: "Contact", href: "/about" },
   ];
 
   const socialLinks = [
-    { name: "GitHub", icon: SiGithub, href: "#" },
-    { name: "Discord", icon: SiDiscord, href: "#" },
-    { name: "LinkedIn", icon: SiLinkedin, href: "#" },
-    { name: "RSS", icon: Rss, href: "#" },
+    { name: "Reddit", icon: SiReddit, href: "https://www.reddit.com/r/vitalrtech/" },
+    { name: "Discord", icon: SiDiscord, href: "https://discord.com/invite/Pzy2wygGwm" },
+    { name: "My LinkedIn", icon: SiLinkedin, href: "https://www.linkedin.com/in/knewton/" },
   ];
 
   return (
