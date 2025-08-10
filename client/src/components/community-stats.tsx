@@ -84,13 +84,13 @@ export default function CommunityStatsSection() {
               Join our community-driven platform and gain access to comprehensive cybersecurity and homelab resources. Build practical skills through hands-on learning and real-world implementations.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="https://www.reddit.com/r/YOUR_SUBREDDIT" target="_blank" rel="noopener noreferrer">
+              <a href="https://www.reddit.com/r/vitalrtech/" target="_blank" rel="noopener noreferrer">
                 <Button className="bg-green-accent hover:bg-green-accent/90 text-white px-8 py-3 font-medium">
                   <UserPlus className="mr-2" size={18} />
                   Join Community
                 </Button>
               </a>
-              <a href="https://discord.gg/YOUR_DISCORD_CODE" target="_blank" rel="noopener noreferrer">
+              <a href="https://discord.gg/Pzy2wygGwm" target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" className="border-metal-grey/30 hover:border-green-accent text-white px-8 py-3 font-medium">
                   <SiDiscord className="mr-2" size={18} />
                   Discord Server
