@@ -8,10 +8,10 @@ export default function Hero() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-            Elevate Your <span className="text-green-accent">Cybersecurity</span> & Homelab Journey
+            Expand your <span className="text-green-accent">Knowledge</span> & <span className="text-green-accent">Homelabbing</span> Journey
           </h1>
           <p className="text-xl text-text-muted mb-8 leading-relaxed">
-            Centralized education through self-hosted infrastructure, hands-on experimentation, and community-driven knowledge sharing. Master IT, networking, security, and system administration through practical application.
+            Education and experience through self-hosted infrastructure,  experimenting and breaking self-hosted infrastructure, and community-driven knowledge.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/documentation">
