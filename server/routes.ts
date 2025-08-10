@@ -60,9 +60,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize database with seed data
   await seedDatabase();
 
-  // Registration is disabled - admin access only
-
+  
   // Authentication routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const data = registrationSchema.parse(req.body);
+
+      const existingUser = await storage.getUserByEmail(data.email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already registered" });
+      }
+
+      const requests = await storage.getRegistrationRequests();
+      const existingRequest = requests.find(
+        r => r.email === data.email && r.status === "pending",
+      );
+      if (existingRequest) {
+        return res
+          .status(400)
+          .json({ message: "Registration request already submitted" });
+      }
+
+      const request = await storage.createRegistrationRequest(data);
+      res
+        .status(201)
+        .json({
+          message: "Registration request submitted",
+          requestId: request.id,
+        });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(400).json({ message: "Invalid request" });
+    }
+  });
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email, password } = loginSchema.parse(req.body);
