@@ -72,7 +72,7 @@ export default function Documentation() {
                     {article.title}
                   </CardTitle>
                   <CardDescription className="text-text-muted">
-                    {article.summary}
+                    {article.description}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
