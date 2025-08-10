@@ -26,18 +26,25 @@ export function DocumentManagement() {
 
   const { data: folders } = useQuery<DocumentFolder[]>({
     queryKey: ["/api/document-folders", selectedTopic],
-    queryFn: () => apiRequest(`/api/document-folders${selectedTopic ? `?topicId=${selectedTopic}` : ""}`),
+    queryFn: () =>
+      apiRequest<DocumentFolder[]>(
+        `/api/document-folders${selectedTopic ? `?topicId=${selectedTopic}` : ""}`,
+      ),
   });
 
   const { data: documents } = useQuery<Document[]>({
     queryKey: ["/api/documents", selectedFolder],
-    queryFn: () => apiRequest(`/api/documents${selectedFolder ? `?folderId=${selectedFolder}` : ""}`),
+    queryFn: () =>
+      apiRequest<Document[]>(
+        `/api/documents${selectedFolder ? `?folderId=${selectedFolder}` : ""}`,
+      ),
   });
 
   const createFolderMutation = useMutation({
     mutationFn: async (data: { name: string; description?: string; topicId?: string; parentId?: string }) => {
-      return apiRequest("/api/admin/document-folders", {
+      return apiRequest<DocumentFolder>("/api/admin/document-folders", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
     },
