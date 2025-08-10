@@ -43,7 +43,7 @@ export default function Community() {
               <Users className="h-4 w-4 text-green-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{stats?.totalMembers || 0}</div>
+              <div className="text-2xl font-bold text-white">{stats?.members || 0}</div>
               <p className="text-xs text-text-muted">Active community members</p>
             </CardContent>
           </Card>
@@ -54,7 +54,7 @@ export default function Community() {
               <MessageSquare className="h-4 w-4 text-green-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{stats?.totalGuides || 0}</div>
+              <div className="text-2xl font-bold text-white">{stats?.guides || 0}</div>
               <p className="text-xs text-text-muted">Knowledge articles shared</p>
             </CardContent>
           </Card>
@@ -65,19 +65,19 @@ export default function Community() {
               <Trophy className="h-4 w-4 text-green-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{stats?.labsCompleted || 0}</div>
+              <div className="text-2xl font-bold text-white">{stats?.implementations || 0}</div>
               <p className="text-xs text-text-muted">Hands-on labs finished</p>
             </CardContent>
           </Card>
 
           <Card className="bg-card-dark border-metal-grey/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-text-muted">Server Uptime</CardTitle>
+             <CardTitle className="text-sm font-medium text-text-muted">Total Downloads</CardTitle>
               <TrendingUp className="h-4 w-4 text-green-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{stats?.serverUptime || "99.9%"}</div>
-              <p className="text-xs text-text-muted">Infrastructure reliability</p>
+              <div className="text-2xl font-bold text-white">{stats?.downloads || 0}</div>
+              <p className="text-xs text-text-muted">Resources downloaded</p>
             </CardContent>
           </Card>
         </div>
