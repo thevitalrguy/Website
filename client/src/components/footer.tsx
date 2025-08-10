@@ -26,7 +26,6 @@ export default function Footer() {
   ];
 
   const socialLinks = [
-    { name: "Reddit", icon: SiReddit, href: "https://www.reddit.com/r/vitalrtech/" },
     { name: "Discord", icon: SiDiscord, href: "https://discord.com/invite/Pzy2wygGwm" },
     { name: "My LinkedIn", icon: SiLinkedin, href: "https://www.linkedin.com/in/knewton/" },
   ];
