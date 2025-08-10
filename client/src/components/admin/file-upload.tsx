@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { Upload, File, Download, Trash2 } from "lucide-react";
 import type { UploadedFile } from "@shared/schema";
 
